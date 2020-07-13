@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:divider="#ec2121"
+    android:dividerHeight="0.5dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="?android:attr/expandableListPreferredItemPaddingLeft"
+        android:textColor="#f07e27"
+        android:textSize="25sp"
+        android:text="Parent"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:paddingEnd="15dp"
+        android:layout_weight="1"
+        android:id="@+id/assets_item_parent_text_view" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:gravity="end"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/add_asset_button"
+            android:text="+"
+            android:focusable="false"
+            android:textSize="38sp"
+            android:textColor="#f07e27"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ripple_effect"
+            android:layout_gravity="right"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="15dp"/>
+    </LinearLayout>
+
+</LinearLayout>
