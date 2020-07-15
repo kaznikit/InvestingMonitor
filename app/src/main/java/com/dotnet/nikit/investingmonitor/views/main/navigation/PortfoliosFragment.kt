@@ -37,7 +37,7 @@ class PortfoliosFragment : DaggerFragment(), OnCompleteAddingData<Portfolio> {
     private var portfoliosListView: ListView? = null
 
     private var portfolios: List<Portfolio>? = null
-    private var portfoliosArray: ArrayList<String>? = null
+    private var portfoliosArray: ArrayList<String>? = ArrayList()
 
     private var rootview: View? = null
 
@@ -77,7 +77,7 @@ class PortfoliosFragment : DaggerFragment(), OnCompleteAddingData<Portfolio> {
 
     private fun initPortfoliosListView(){
         portfoliosListView = activity?.findViewById(R.id.portfolios_listview)
-        portfoliosArray = ArrayList()
+
         if (portfoliosAdapter == null) {
             portfoliosAdapter =
                 ArrayAdapter(activity!!, R.layout.invest_listview_item, portfoliosArray!!)
@@ -92,6 +92,7 @@ class PortfoliosFragment : DaggerFragment(), OnCompleteAddingData<Portfolio> {
             for (portfolio in portfolios!!) {
                 portfoliosArray!!.add(portfolio.name!!)
             }
+
             portfoliosAdapter?.notifyDataSetChanged()
         })
 

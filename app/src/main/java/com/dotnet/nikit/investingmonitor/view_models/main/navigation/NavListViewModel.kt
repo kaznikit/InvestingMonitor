@@ -1,7 +1,6 @@
 package com.dotnet.nikit.investingmonitor.view_models.main.navigation
 
 import android.util.Log
-import android.view.ScaleGestureDetector
 import androidx.lifecycle.*
 import com.dotnet.nikit.investingmonitor.db.models.*
 import com.dotnet.nikit.investingmonitor.mappers.BrokerMapper
@@ -16,8 +15,7 @@ import com.dotnet.nikit.investingmonitor.repositories.NavListRepository
 import com.dotnet.nikit.investingmonitor.views.main.navigation.NavListFragment
 import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import javax.inject.Inject
 
 class NavListViewModel
@@ -27,8 +25,10 @@ class NavListViewModel
     private val brokersList = MediatorLiveData<List<BrokerDto>>()
     private val portfoliosList = MediatorLiveData<List<PortfolioDto>>()
 
+    private val forcedUpdate = MutableLiveData<Boolean>(false)
+    private val sharesListForPortfolio = MediatorLiveData<List<ShareDto>>()
+
     private val portfolioIdLiveData = MutableLiveData<Int>()
-    private val sharesList = MediatorLiveData<List<ShareDto>>()
     private val bondsList = MediatorLiveData<List<BondDto>>()
     private val sharesWithPricesList = MediatorLiveData<List<ShareDto>>()
 
@@ -41,6 +41,17 @@ class NavListViewModel
 
 
     private val shareAndPricesList = MutableLiveData<List<ShareDto>>()
+
+
+    private var portfolioId: Int? = null
+
+
+    private var allSharesList : List<ShareDto>? = null
+
+    private val _dataLoading = MutableLiveData<Boolean>()
+    val dataLoading: LiveData<Boolean> = _dataLoading
+
+    private val sharesByPortfolioIdLiveData : MutableLiveData<List<ShareDto>> = MutableLiveData()
 
     init {
         needsToUpdateBrokersList.postValue(true)
@@ -63,57 +74,50 @@ class NavListViewModel
             navListRepository.getBondsByPortfolioId(portfolioIdLiveData.value!!)
         }
 
-        val liveSharesWithPricesList = Transformations.switchMap(getSharePricesLiveData) {
+      /*  val liveSharesWithPricesList = Transformations.switchMap(getSharePricesLiveData) {
             navListRepository.getCurrentPrices(sharesList.value!!)
-        }
+        }*/
 
         val liveDividendsList = Transformations.switchMap(dividendsLiveData) {
             navListRepository.getDividendsByAssetId(dividendsLiveData.value!!)
         }
 
+        GlobalScope.launch {
+            allSharesList = navListRepository.getShares()
+            getAssetsPrices()
+        }
+
+        /**
+         * Загружаем из БД все активы
+         */
+        loadAssets(true)
+
+
+        val sharesForPortfolioLiveData = Transformations.switchMap(portfolioIdLiveData) {
+            getSharesByPortfolioId(portfolioIdLiveData.value!!)
+        }
+
+        sharesListForPortfolio.addSource(sharesForPortfolioLiveData) {
+            sharesListForPortfolio.value = it
+        }
+
+
         dividendsList.addSource(liveDividendsList, dividendsList::setValue)
 
-        sharesList.addSource(liveSharesList) {
-            sharesList.value = it
-            //getSharesWithPrices()
-            requestForPrices()
-        }
 
         /**
          * когда получили текущие цены через апи, меняем их в sharesList
          */
-        sharesWithPricesList.addSource(liveSharesWithPricesList, sharesWithPricesList::setValue)
+        //sharesWithPricesList.addSource(liveSharesWithPricesList, sharesWithPricesList::setValue)
         bondsList.addSource(liveBondsList, bondsList::setValue)
     }
 
-    /**
-     * получаем записанные в БД активы, уведомляем об этом активити и после этого подгружаем текущие цены с сервера
-     */
-    fun getSharesWithPrices() {
-        getSharePricesLiveData.postValue(true)
-    }
-
-    /*fun getSharesCombined() : CombinedLiveData<Share, Share>{
-
-    }
-
-    fun combineSharesData(T : LiveData<List<Share>>, K : LiveData<List<Share>>) : MediatorLiveData<Share>{
-        for(value in T.value!!.iterator()){
-
-        }
-    }*/
 
     fun getNavListFragment(): NavListFragment {
         if (navListFragment == null) {
             navListFragment = NavListFragment()
         }
         return navListFragment!!
-    }
-
-    fun getCurrentPrices(): LiveData<List<ShareDto>> {
-        /*sharesList.value = Event.loading()
-        sharesList.postValue(navListRepository.getCurrentPrices(sharesList.value!!.data!!).value)*/
-        return sharesWithPricesList
     }
 
     fun addPortfolio(portfolio: Portfolio) {
@@ -143,11 +147,11 @@ class NavListViewModel
     }
 
     fun getAssetsByPortfolioId(portfolioId: Int) {
-        portfolioIdLiveData.postValue(portfolioId)
+        this.portfolioId = portfolioId
     }
 
-    fun getSharesList(): LiveData<List<ShareDto>> {
-        return sharesList
+    private fun postPortfolioValue() {
+        portfolioIdLiveData.postValue(portfolioId)
     }
 
     fun getBondsList(): LiveData<List<BondDto>> {
@@ -168,54 +172,43 @@ class NavListViewModel
         }
     }
 
- /*   fun getPrices(): LiveData<List<ShareDto>> {
-        var tempList = ArrayList<ShareDto>()
-        for (share in sharesList.value!!) {
-            var res = navListRepository.getPrice(share)
-                .subscribeOn(Schedulers.io())
-                .subscribe({
-                    tempList.add(it)
-                },
-                    {
-                        Log.e("navListViewModel", it?.message!!)
-                    })
-        }
-        shareAndPricesList.postValue(tempList)
-        return shareAndPricesList
-    }*/
+    private fun getAssetsPrices() {
+        val tempList = ArrayList<ShareDto>()
 
-    fun requestForPrices(){
-      /*  val tempList = ArrayList<ShareDto>()
-        for (share in sharesList.value!!) {
-            var res = navListRepository.getPrice(share)
-                .subscribeOn(Schedulers.io())
-                .subscribe({
-                    tempList.add(it)
-                },
-                    {
-                        Log.e("navListViewModel", it?.message!!)
-                    })
+        Observable.fromIterable(allSharesList).flatMap {
+            navListRepository.getPrice(it).doOnNext {
+                tempList.add(it)
+            }.subscribeOn(Schedulers.io())
         }
-        shareAndPricesList.postValue(tempList)*/
-
-        Observable.fromArray(sharesList.value!!).flatMap {
-            var tempList = ArrayList<ShareDto>()
-            for(share in it){
-                navListRepository.getPrice(share).subscribeOn(Schedulers.io()).subscribe {
-                    tempList.add(it)
+            .subscribe({
+                allSharesList = tempList
+                postPortfolioValue()
+                GlobalScope.launch {
+                    updateShares()
                 }
-            }
-        }.toList().subscribeOn(Schedulers.io()).map {
-            shareAndPricesList.postValue(it!!)
-        }
-
-
-        Observable.zip(sharesList.value!!){
-
-        }
+            },
+                {
+                    Log.e("Network", "Ошибка при получении цен.")
+                    postPortfolioValue()
+                })
     }
 
-    fun getPrices() : LiveData<List<ShareDto>>{
-        return shareAndPricesList
+    private fun loadAssets(forcedUpdate: Boolean) {
+        this.forcedUpdate.postValue(forcedUpdate)
+    }
+
+    private fun getSharesByPortfolioId(portfolioId: Int): LiveData<List<ShareDto>> {
+        sharesByPortfolioIdLiveData.value = allSharesList!!.filter { x -> x.portfolioId == portfolioId }
+        return sharesByPortfolioIdLiveData
+    }
+
+    fun getSharesForPortfolio(): LiveData<List<ShareDto>> {
+        return sharesListForPortfolio
+    }
+
+    private suspend fun updateShares() = withContext(Dispatchers.IO){
+        for(share in allSharesList!!) {
+            navListRepository.updateShare(share)
+        }
     }
 }

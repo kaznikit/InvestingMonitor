@@ -94,8 +94,6 @@ class NavListFragment : DaggerFragment(), OnCompleteAddingData<Any>, OnGroupItem
 
         swipeRefreshLayout = activity?.findViewById(R.id.assets_swipe_refresh_layout)
 
-        navListViewModel.getAssetsByPortfolioId(portfolioId!!)
-
         childsList.add(0, shareList)
         childsList.add(1, bondList)
         childsList.add(2, etfList)
@@ -104,7 +102,7 @@ class NavListFragment : DaggerFragment(), OnCompleteAddingData<Any>, OnGroupItem
         parentsList.add("Облигации")
         parentsList.add("ПАИ")
 
-        navListViewModel.getSharesList().observe(this.viewLifecycleOwner, Observer {
+        navListViewModel.getSharesForPortfolio().observe(this.viewLifecycleOwner, Observer {
             val tempShares = ShareMapper.mapShareList(it)
             shareList.clear()
             for (share in tempShares) {
@@ -120,70 +118,7 @@ class NavListFragment : DaggerFragment(), OnCompleteAddingData<Any>, OnGroupItem
                 )
             }
             assetsListviewAdapter?.notifyDataSetChanged()
-
-           /* if (needsToUpdateAssetsList) {
-                needsToUpdateAssetsList = false
-                navListViewModel.getSharesWithPrices()
-            }
-            swipeRefreshLayout?.isRefreshing = false*/
         })
-
-        /*navListViewModel.getCurrentPrices().observe(this.viewLifecycleOwner, Observer {
-            val tempShares = ShareMapper.mapShareList(it)
-            shareList.clear()
-            for (share in tempShares) {
-                shareList.add(
-                    AssetListViewItem(
-                        share.id!!,
-                        share.name,
-                        share.buyPrice.toString(),
-                        share.currentPrice?.toString(),
-                        getPriceChange(share.buyPrice, share.currentPrice),
-                        AssetTypeEnum.Share
-                    )
-                )
-            }
-            assetsListviewAdapter?.notifyDataSetChanged()
-            swipeRefreshLayout?.isRefreshing = false
-        })
-
-        navListViewModel.getBondsList().observe(this.viewLifecycleOwner, Observer {
-            val tempBonds = BondMapper.mapBondList(it)
-            bondList.clear()
-            for (bond in tempBonds) {
-                bondList.add(
-                    AssetListViewItem(
-                        bond.id!!,
-                        bond.name, bond.buyPrice.toString(), bond.currentPrice.toString(),
-                        getPriceChange(bond.buyPrice, bond.currentPrice),
-                        AssetTypeEnum.Bond
-                    )
-                )
-            }
-            assetsListviewAdapter?.notifyDataSetChanged()
-        })
-*/
-
-
-        navListViewModel.getPrices().observe(this.viewLifecycleOwner, Observer {
-            val tempShares = ShareMapper.mapShareList(it)
-            shareList.clear()
-            for (share in tempShares) {
-                shareList.add(
-                    AssetListViewItem(
-                        share.id!!,
-                        share.name,
-                        share.buyPrice.toString(),
-                        share.currentPrice?.toString(),
-                        getPriceChange(share.buyPrice, share.currentPrice),
-                        AssetTypeEnum.Share
-                    )
-                )
-            }
-            assetsListviewAdapter?.notifyDataSetChanged()
-            swipeRefreshLayout?.isRefreshing = false
-        })
-
 
         assetsListviewAdapter = AssetsListviewAdapter(activity!!, childsList, parentsList, this)
         assetsExpandableListView?.setAdapter(assetsListviewAdapter)
@@ -202,6 +137,9 @@ class NavListFragment : DaggerFragment(), OnCompleteAddingData<Any>, OnGroupItem
             }
             return@setOnChildClickListener true
         }
+
+        navListViewModel.getAssetsByPortfolioId(portfolioId!!)
+
     }
 
     private fun setupToolbar() {

@@ -11,13 +11,16 @@ import com.dotnet.nikit.investingmonitor.db.models.ShareDto
 interface ShareDao {
 
     @Query("SELECT * FROM ShareDto")
-    fun getSharesList() : LiveData<List<ShareDto>>
+    fun getSharesList() : List<ShareDto>
 
     @Query("SELECT * FROM ShareDto where portfolioId = :portfolioId")
     fun getSharesByPortfolioId(portfolioId : Int) : LiveData<List<ShareDto>>
 
     @Insert
     fun insertShare(share : ShareDto)
+
+    @Query("UPDATE ShareDto SET currentPrice = :currentPrice and sellPrice = :sellPrice and sellDate = :sellDate where id = :id")
+    fun updateShare(id : Int, currentPrice : Float, sellPrice : Float, sellDate : String)
 
     @Delete
     fun removeShare(share : ShareDto)

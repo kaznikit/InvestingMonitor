@@ -70,6 +70,7 @@ class PortfolioAddFragment(parentFragment: DaggerFragment,
                 )
             }
             brokersSpinner?.adapter = adapter
+            adapter?.notifyDataSetChanged()
         })
 
         portfolioNameEditText = rootView?.findViewById(R.id.portfolio_add_name)
