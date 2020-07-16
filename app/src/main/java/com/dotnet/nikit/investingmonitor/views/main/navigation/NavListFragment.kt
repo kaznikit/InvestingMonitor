@@ -1,17 +1,13 @@
 package com.dotnet.nikit.investingmonitor.views.main.navigation
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ExpandableListView
-import android.widget.ListView
 import android.widget.TextView
-import androidx.activity.viewModels
-import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -22,22 +18,15 @@ import com.dotnet.nikit.investingmonitor.interfaces.OnGroupItemSelected
 import com.dotnet.nikit.investingmonitor.interfaces.OnSelectListViewItem
 import com.dotnet.nikit.investingmonitor.listview_adapters.AssetListViewItem
 import com.dotnet.nikit.investingmonitor.listview_adapters.AssetsListviewAdapter
-import com.dotnet.nikit.investingmonitor.mappers.BondMapper
-import com.dotnet.nikit.investingmonitor.mappers.ShareMapper
-import com.dotnet.nikit.investingmonitor.models.BaseAsset
 import com.dotnet.nikit.investingmonitor.models.Bond
-import com.dotnet.nikit.investingmonitor.models.Portfolio
 import com.dotnet.nikit.investingmonitor.models.Share
-import com.dotnet.nikit.investingmonitor.view_models.main.Status
 import com.dotnet.nikit.investingmonitor.view_models.main.navigation.NavListViewModel
 import com.dotnet.nikit.investingmonitor.views.main.dialog_fragments.BondAddFragment
 import com.dotnet.nikit.investingmonitor.views.main.dialog_fragments.ShareAddFragment
 import dagger.android.support.DaggerAppCompatActivity
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.main.assets_listview_item_parent.*
-import kotlinx.android.synthetic.main.nav_list_fragment.*
-import kotlinx.android.synthetic.main.portfolio_fragment_toolbar.*
 import javax.inject.Inject
+import kotlin.IllegalArgumentException
 import kotlin.math.roundToInt
 
 class NavListFragment : DaggerFragment(), OnCompleteAddingData<Any>, OnGroupItemSelected {
@@ -53,8 +42,8 @@ class NavListFragment : DaggerFragment(), OnCompleteAddingData<Any>, OnGroupItem
 
     private var rootview: View? = null
 
-    private var portfolioId: Int? = null
-    private var portfolioName: String? = null
+    private var portfolioId: Int = -1
+    private lateinit var portfolioName: String
 
     val parentsList = ArrayList<String>()
     val childsList = ArrayList<ArrayList<AssetListViewItem>>()
@@ -75,8 +64,8 @@ class NavListFragment : DaggerFragment(), OnCompleteAddingData<Any>, OnGroupItem
         savedInstanceState: Bundle?
     ): View? {
         rootview = inflater.inflate(R.layout.nav_list_fragment, listFrag, false)
-        portfolioId = arguments?.getInt("id")
-        portfolioName = arguments?.getString("name")
+        portfolioId = arguments?.getInt("id") ?: throw IllegalArgumentException("Айди портфеля не может быть null.")
+        portfolioName = arguments?.getString("name") ?: throw IllegalArgumentException("Не найдено название портфеля")
         return rootview
     }
 
@@ -103,12 +92,11 @@ class NavListFragment : DaggerFragment(), OnCompleteAddingData<Any>, OnGroupItem
         parentsList.add("ПАИ")
 
         navListViewModel.getSharesForPortfolio().observe(this.viewLifecycleOwner, Observer {
-            val tempShares = ShareMapper.mapShareList(it)
             shareList.clear()
-            for (share in tempShares) {
+            for (share in it) {
                 shareList.add(
                     AssetListViewItem(
-                        share.id!!,
+                        share.id ?: throw IllegalArgumentException("Айди акции не может быть null."),
                         share.name,
                         share.buyPrice.toString(),
                         share.currentPrice?.toString(),
@@ -120,13 +108,26 @@ class NavListFragment : DaggerFragment(), OnCompleteAddingData<Any>, OnGroupItem
             assetsListviewAdapter?.notifyDataSetChanged()
         })
 
+        navListViewModel.getBondsForPortfolio().observe(this.viewLifecycleOwner, Observer {
+            bondList.clear()
+            for(bond in it){
+                bondList.add(AssetListViewItem(bond.id ?: throw IllegalArgumentException("Айди облигации не может быть null."),
+                    bond.name,
+                    bond.buyPrice.toString(),
+                    bond.currentPrice?.toString(),
+                    getPriceChange(bond.buyPrice, bond.currentPrice),
+                    AssetTypeEnum.Bond))
+            }
+            assetsListviewAdapter?.notifyDataSetChanged()
+        })
+
         assetsListviewAdapter = AssetsListviewAdapter(activity!!, childsList, parentsList, this)
         assetsExpandableListView?.setAdapter(assetsListviewAdapter)
 
         swipeRefreshLayout?.setOnRefreshListener {
             swipeRefreshLayout?.isRefreshing = true
             needsToUpdateAssetsList = true
-            navListViewModel.getAssetsByPortfolioId(portfolioId!!)
+            navListViewModel.getAssetsByPortfolioId(portfolioId)
         }
 
         assetsExpandableListView?.setOnChildClickListener { expandableListView, view, i, i2, l ->
@@ -138,7 +139,7 @@ class NavListFragment : DaggerFragment(), OnCompleteAddingData<Any>, OnGroupItem
             return@setOnChildClickListener true
         }
 
-        navListViewModel.getAssetsByPortfolioId(portfolioId!!)
+        navListViewModel.getAssetsByPortfolioId(portfolioId)
 
     }
 
@@ -186,7 +187,10 @@ class NavListFragment : DaggerFragment(), OnCompleteAddingData<Any>, OnGroupItem
     override fun onCompleteAdding(data: Any) {
         when (data) {
             is Share -> {
-                navListViewModel.addShare(data, portfolioId!!)
+                navListViewModel.addShare(data, portfolioId)
+            }
+            is Bond -> {
+                navListViewModel.addBond(data, portfolioId)
             }
         }
     }

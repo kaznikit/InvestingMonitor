@@ -11,7 +11,7 @@ import com.dotnet.nikit.investingmonitor.db.models.BondDto
 interface BondDao {
 
     @Query("SELECT * FROM BondDto")
-    fun getBondsList() : LiveData<List<BondDto>>
+    fun getBondsList() : List<BondDto>
 
     @Query("SELECT * FROM BondDto where portfolioId = :portfolioId")
     fun getBondsByPortfolioId(portfolioId : Int) : LiveData<List<BondDto>>

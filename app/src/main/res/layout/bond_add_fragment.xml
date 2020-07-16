@@ -1,52 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <include
-        android:id="@+id/add_fragment_template"
-        layout="@layout/asset_add_fragment_template" />
-
-    <com.google.android.material.textfield.TextInputLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="20dp"
-        android:layout_marginTop="2dp"
-        android:layout_marginRight="20dp"
-        android:layout_marginBottom="1dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/bond_coupon_rate"
+        <include
+            android:id="@+id/add_fragment_template"
+            layout="@layout/asset_add_fragment_template" />
+
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Купон" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="1dp">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="20dp"
-        android:layout_marginTop="2dp"
-        android:layout_marginRight="20dp"
-        android:layout_marginBottom="24dp">
+            <EditText
+                android:id="@+id/bond_coupon_rate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Купон" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <EditText
-            android:id="@+id/bond_maturity_date"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Дата погашения" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="24dp">
 
-    <Button
-        android:id="@+id/accept_changes_button"
-        style="@style/style_btn"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:layout_marginLeft="15dp"
-        android:layout_marginRight="15dp"
-        android:layout_marginBottom="20dp"
-        android:text="Принять" />
+            <EditText
+                android:id="@+id/bond_maturity_date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Дата погашения" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-</LinearLayout>
+        <Button
+            android:id="@+id/accept_changes_button"
+            style="@style/style_btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginLeft="15dp"
+            android:layout_marginRight="15dp"
+            android:layout_marginBottom="20dp"
+            android:text="Принять" />
+    </LinearLayout>
+</ScrollView>

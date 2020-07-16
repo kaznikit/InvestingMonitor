@@ -63,8 +63,8 @@ class NavListRepository @Inject constructor(
 
     //region Bonds
 
-    fun getBonds(): LiveData<List<BondDto>> {
-        return bondsDao.getBondsList()
+    suspend fun getBonds(): List<BondDto> = withContext(Dispatchers.IO) {
+        return@withContext bondsDao.getBondsList()
     }
 
     fun getBondsByPortfolioId(portfolioId: Int): LiveData<List<BondDto>> {

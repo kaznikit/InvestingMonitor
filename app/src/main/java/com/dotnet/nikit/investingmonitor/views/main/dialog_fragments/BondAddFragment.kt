@@ -1,20 +1,23 @@
 package com.dotnet.nikit.investingmonitor.views.main.dialog_fragments
 
-import android.app.DatePickerDialog
+import android.os.Bundle
 import android.widget.*
 import com.dotnet.nikit.investingmonitor.R
 import com.dotnet.nikit.investingmonitor.enums.AssetTypeEnum
 import com.dotnet.nikit.investingmonitor.enums.CurrencyEnum
-import com.dotnet.nikit.investingmonitor.interfaces.OnCompleteAddingData
 import com.dotnet.nikit.investingmonitor.models.Bond
 import com.dotnet.nikit.investingmonitor.util.Utils
 import dagger.android.support.DaggerFragment
-import java.util.*
 import kotlin.collections.ArrayList
 
 class BondAddFragment(parentFragment: DaggerFragment,
                       resource: Int, title: String
 ) : BaseAddAssetFragment(parentFragment, resource, title) {
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        initViews()
+    }
 
 
     override fun initViews() {
