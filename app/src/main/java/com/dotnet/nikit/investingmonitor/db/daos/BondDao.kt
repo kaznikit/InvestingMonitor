@@ -19,6 +19,9 @@ interface BondDao {
     @Insert
     fun insertBond(bond : BondDto)
 
+    @Query("UPDATE BondDto set currentPrice = :currentPrice and sellPrice = :sellPrice and sellDate = :sellDate where id = :id")
+    fun updateBond(id : Int, currentPrice : Float, sellPrice : Float, sellDate : String)
+
     @Delete
     fun removeBond(bond : BondDto)
 }

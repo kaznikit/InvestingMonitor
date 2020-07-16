@@ -13,6 +13,7 @@ import io.reactivex.internal.operators.observable.ObservableCache
 import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.lang.Exception
 import javax.inject.Inject
 import kotlin.collections.ArrayList
 import kotlin.coroutines.CoroutineContext
@@ -51,8 +52,9 @@ class NavListRepository @Inject constructor(
         sharesDao.updateShare(
             share.id!!,
             if (share.currentPrice != null) share.currentPrice!! else 0f,
-            if(share.sellPrice != null) share.currentPrice!! else 0f,
-            if(share.sellDate != null) share.sellDate!! else "")
+            if (share.sellPrice != null) share.currentPrice!! else 0f,
+            if (share.sellDate != null) share.sellDate!! else ""
+        )
     }
 
     fun removeShare(share: ShareDto) {
@@ -77,6 +79,10 @@ class NavListRepository @Inject constructor(
 
     fun removeBond(bond: BondDto) {
         bondsDao.removeBond(bond)
+    }
+
+    suspend fun updateBond(bond: BondDto) = withContext(Dispatchers.IO) {
+        bondsDao.updateBond(bond.id!!, bond.currentPrice!!, bond.sellPrice!!, bond.sellDate!!)
     }
 
     //endregion
@@ -183,13 +189,34 @@ class NavListRepository @Inject constructor(
         }
     }*/
 
-    fun getPrice(share: ShareDto): Observable<ShareDto> {
+    fun getSharePrice(share: ShareDto): Observable<ShareDto> {
         return mainApi.getCurrentPriceByBoardAndSecurity("TQBR", share.security!!).flatMap {
             val list = it.data[0]
             val lis = GsonBuilder().create().fromJson(list, Array<String>::class.java)
             share.currentPrice = lis[1].toFloat()
             Log.d("", "Finished")
             Observable.just(share)
+        }
+    }
+
+    fun getBondPrice(bond: BondDto): Observable<BondDto> {
+        var market = if (bond.security!!.startsWith("SU")) {
+            "TQOB"
+        } else {
+            "TQCB"
+        }
+        return mainApi.getCurrentPriceByBoardAndSecurity(market, bond.security!!).flatMap {
+            try {
+                if (it.data.size() != 0) {
+                    val list = it.data[0]
+                    val lis = GsonBuilder().create().fromJson(list, Array<String>::class.java)
+                    bond.currentPrice = lis[1].toFloat()
+                    Log.d("", "Finished")
+                }
+                Observable.just(bond)
+            } catch (ex: Exception) {
+                Observable.just(bond)
+            }
         }
     }
 }

@@ -8,10 +8,14 @@ import retrofit2.http.Path
 
 interface MainApi {
 
-/*    @GET("iss/engines/stock/markets/shares/boards/{board}/securities/{security}.json")
-    fun getInfoByBoardAndSecurity(@Path("board") board : String, @Path("security") security : String) : Flowable<MarketData>*/
+    /**
+     * boards:
+     * TQBR - shares
+     * TQCB - corporate bonds
+     * TQOB - ofz
+     * TQTF - etf
+     */
 
-    @GET("iss/engines/stock/markets/shares/boards/{board}/securities/{security}.json?iss.meta=off&iss.only=marketdata&marketdata.columns=SECID,LCURRENTPRICE")
+    @GET("iss/engines/stock/markets/bonds/boards/{board}/securities/{security}.json?iss.meta=off&iss.only=marketdata&marketdata.columns=SECID,LCURRENTPRICE")
     fun getCurrentPriceByBoardAndSecurity(@Path("board") board : String, @Path("security") security : String) : Observable<MarketData>
-
 }

@@ -60,7 +60,7 @@ class NavListViewModel
         CoroutineScope(Dispatchers.IO).launch {
             getSharesList()
             getBondsList()
-            getAssetsPrices()
+            getSharesPrices()
             getBondsPrices()
         }
 
@@ -163,18 +163,18 @@ class NavListViewModel
         }
     }
 
-    private fun getAssetsPrices() {
+    private fun getSharesPrices() {
         val tempList = ArrayList<ShareDto>()
 
         Observable.fromIterable(allSharesList).flatMap {
-            navListRepository.getPrice(it).doOnNext {
+            navListRepository.getSharePrice(it).doOnNext {
                 tempList.add(it)
             }.subscribeOn(Schedulers.io())
         }
             .subscribe({
                 allSharesList = tempList
                 postPortfolioValue()
-                GlobalScope.launch {
+                viewModelScope.launch {
                     updateShares()
                 }
             },
@@ -185,7 +185,23 @@ class NavListViewModel
     }
 
     private fun getBondsPrices(){
-
+        val tempList = ArrayList<BondDto>()
+        Observable.fromIterable(allBondsList).flatMap {
+            navListRepository.getBondPrice(it).doOnNext {
+                tempList.add(it)
+            }.subscribeOn(Schedulers.io())
+        }
+            .subscribe({
+                allBondsList = tempList
+                postPortfolioValue()
+               /* viewModelScope.launch {
+                    updateBonds()
+                }*/
+            },
+                {
+                    Log.e("Netweork", "Ошибка при получении цен облигаций.")
+                    postPortfolioValue()
+                })
     }
 
     private fun loadAssets(forcedUpdate : Boolean) {
@@ -213,6 +229,12 @@ class NavListViewModel
     private suspend fun updateShares() = withContext(Dispatchers.IO){
         for(share in allSharesList!!) {
             navListRepository.updateShare(share)
+        }
+    }
+
+    private suspend fun updateBonds() = withContext(Dispatchers.IO){
+        for(bond in allBondsList!!){
+            navListRepository.updateBond(bond)
         }
     }
 }
